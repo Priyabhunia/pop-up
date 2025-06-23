@@ -1,0 +1,20 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "quick-input",
+  "outputfilename": "quick-input",
+  "frontend:install": "",
+  "frontend:build": "",
+  "frontend:dev:watcher": "",
+  "frontend:dev:serverUrl": "",
+  "author": {
+    "name": "",
+    "email": ""
+  },
+  "info": {
+    "productName": "Quick Input",
+    "productVersion": "1.0.0",
+    "companyName": "",
+    "copyright": "",
+    "comments": "A snappy popup input box"
+  }
+}

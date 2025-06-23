@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Input</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0f2e;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        
+
+
+
+        .container {
+            background: #15193f;
+            border-radius: 8px;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: none;
+            border: 1px solid #404040;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: transparent;
+            width: 100%;
+            padding: 0 16px;
+        }
+
+        .search-icon {
+            color: #888;
+            margin-right: 12px;
+            font-size: 16px;
+        }
+
+        #quickInput {
+            flex: 1;
+            padding: 16px 0;
+            border: none;
+            background: transparent;
+            font-size: 15px;
+            color: #e0e0e0;
+            outline: none;
+            font-weight: 400;
+        }
+
+        #quickInput::placeholder {
+            color: #888;
+        }
+
+        .shortcut-hint {
+            color: #666;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        .result {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 0;
+            padding: 12px 16px;
+            background: #2d2d2d;
+            border-radius: 0 0 8px 8px;
+            font-size: 14px;
+            color: #e0e0e0;
+            border: 1px solid #404040;
+            border-top: none;
+            display: none;
+            z-index: 10;
+        }
+
+        .result.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+
+    </style>
+</head>
+<body>
+        <div class="container fade-in">
+            <div class="input-group">
+                <span class="search-icon"></span>
+                <input 
+                    type="text" 
+                    id="quickInput" 
+                    placeholder=""
+                    autocomplete="off"
+                    spellcheck="false"
+                >
+                <span class="shortcut-hint">⏎</span>
+            </div>
+            <div id="result" class="result"></div>
+        </div>
+
+    <script src="/wails/runtime/runtime.js"></script>
+    <script>
+        const input = document.getElementById('quickInput');
+        const result = document.getElementById('result');
+        
+        // Focus input immediately
+        input.focus();
+
+        // Only handle Escape to hide the window via Go
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (window.go && window.go.main && window.go.main.App && window.go.main.App.HideWindow) {
+                    window.go.main.App.HideWindow();
+                }
+            }
+        });
+        
+        // Focus input when window is shown or gets focus
+        window.addEventListener('focus', () => {
+            input.focus();
+        });
+        
+        // Aggressive focus approach - check every 50ms if document is visible and focused
+        setInterval(() => {
+            if (document.visibilityState === 'visible' && document.hasFocus()) {
+                input.focus();
+            }
+        }, 50);
+        
+        // Watch for visibility changes
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                input.focus();
+            }
+        });
+        
+        // Handle Enter key
+        input.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                const value = input.value.trim();
+                if (value) {
+                    try {
+                        // Call the Go backend
+                        const response = await window.go.main.App.ProcessInput(value);
+                        
+                        // Show result
+                        result.textContent = response;
+                        result.classList.add('show');
+                        
+                        // Clear input and focus
+                        input.value = '';
+                        input.focus();
+                        
+                        // Hide result after 2 seconds
+                        setTimeout(() => {
+                            result.classList.remove('show');
+                        }, 2000);
+                        
+                    } catch (error) {
+                        console.error('Error:', error);
+                        result.textContent = 'Error processing input';
+                        result.classList.add('show');
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
