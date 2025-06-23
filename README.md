@@ -18,7 +18,7 @@ to this in your browser, and you can call your Go code from devtools.
 
 To build a redistributable, production mode package, use `wails build`.
 
-# Quick Input
+# Pop-up
 
 A minimalist, global hotkey-activated input box for quick commands and searches.
 
@@ -32,7 +32,7 @@ A minimalist, global hotkey-activated input box for quick commands and searches.
 
 ## Screenshots
 
-![Quick Input Screenshot](screenshots/screenshot1.png)
+![Pop-up Screenshot](screenshots/screenshot1.png)
 
 
 ## Installation & Setup
@@ -44,8 +44,8 @@ A minimalist, global hotkey-activated input box for quick commands and searches.
 
 2. **Clone the repository**:
    ```
-   git clone https://github.com/yourusername/quick-input.git
-   cd quick-input
+   git clone https://github.com/yourusername/pop-up.git
+   cd pop-up
    ```
 
 3. **Build and Run**:
