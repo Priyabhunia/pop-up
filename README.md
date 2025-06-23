@@ -44,7 +44,7 @@ A minimalist, global hotkey-activated input box for quick commands and searches.
 
 2. **Clone the repository**:
    ```
-   git clone https://github.com/yourusername/pop-up.git
+   git clone https://github.com/Priyabhunia/pop-up.git
    cd pop-up
    ```
 
