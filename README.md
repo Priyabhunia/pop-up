@@ -32,7 +32,7 @@ A minimalist, global hotkey-activated input box for quick commands and searches.
 
 ## Screenshots
 
-![Quick Input Screenshot](screenshots/Screenshot 2025-06-24 020949.png)
+![Quick Input Screenshot](screenshots/Screenshot%2025-06-24%020949.png)
 
 *To add your screenshot: Save your screenshot as "screenshot.png" in a "screenshots" folder and update this reference*
 
