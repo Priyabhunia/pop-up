@@ -72,7 +72,7 @@ A minimalist, global hotkey-activated input box for quick commands and searches.
 
 ## License
 
-[Your License Here]
+[MIT License](LICENSE)
 
 ## Acknowledgements
 
