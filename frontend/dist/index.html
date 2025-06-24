@@ -129,13 +129,13 @@
         <div class="container fade-in">
             <div class="input-group">
                 <span class="search-icon"></span>
-                <input 
-                    type="text" 
+                <textarea 
                     id="quickInput" 
-                    placeholder=""
+                    placeholder="First line: title, rest: content"
                     autocomplete="off"
                     spellcheck="false"
-                >
+                    rows="1"
+                ></textarea>
                 <span class="shortcut-hint">⏎</span>
             </div>
             <div id="result" class="result"></div>
@@ -177,9 +177,10 @@
             }
         });
         
-        // Handle Enter key
+        // Handle Enter key (with Shift+Enter for new lines)
         input.addEventListener('keydown', async (e) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault(); // Prevent default behavior of Enter
                 const value = input.value.trim();
                 if (value) {
                     try {
@@ -197,6 +198,11 @@
                         // Hide result after 2 seconds
                         setTimeout(() => {
                             result.classList.remove('show');
+                            
+                            // Hide the window after showing the result
+                            if (window.go && window.go.main && window.go.main.App && window.go.main.App.HideWindow) {
+                                window.go.main.App.HideWindow();
+                            }
                         }, 2000);
                         
                     } catch (error) {
@@ -205,6 +211,9 @@
                         result.classList.add('show');
                     }
                 }
+            } else if (e.key === 'Enter' && e.shiftKey) {
+                // Allow Shift+Enter to create a new line
+                // Default behavior will work
             }
         });
     </script>

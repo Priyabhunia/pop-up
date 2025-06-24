@@ -3,7 +3,7 @@ build/bin/
 build/windows/
 build/darwin/
 build/linux/
-
+.env
 # Frontend dependencies and build artifacts
 frontend/node_modules/
 # Keep frontend/dist/ as it contains the actual frontend code
