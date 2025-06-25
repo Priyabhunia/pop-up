@@ -31,7 +31,7 @@ A minimalist, global hotkey-activated input box for quick commands and searches 
 
 ## Screenshots
 
-![Pop-up Screenshot](screenshots/screenshot1.png)
+![Pop-up Screenshot](screenshots/screenshot3.png)
 
 ## Installation & Setup
 
@@ -49,10 +49,12 @@ A minimalist, global hotkey-activated input box for quick commands and searches 
 3. **Setup Obsidian Integration**:
    - Install the "Local REST API" plugin in Obsidian
    - Enable the plugin and copy your API key
-   - Create a `.env` file in the project root with:
-     ```
-     OBSIDIAN_API_KEY=your_api_key_here
-     ```
+   - Either:
+     - Enter your API key in the app's settings panel (click the ⚙️ icon), or
+     - Create a `.env` file in the project root with:
+       ```
+       OBSIDIAN_API_KEY=your_api_key_here
+       ```
 
 4. **Build and Run**:
    ```
@@ -73,9 +75,10 @@ A minimalist, global hotkey-activated input box for quick commands and searches 
 
 1. Launch the application
 2. Make sure Obsidian is running with the Local REST API plugin enabled
-3. Press `Ctrl+Space` anywhere to show the input box
-4. Type your note content and press `Enter` to save it to Obsidian
-5. Press `Esc` to hide the input box
+3. Set your API key in the settings if you haven't already (click ⚙️ icon in the app)
+4. Press `Ctrl+Space` anywhere to show the input box
+5. Type your note content and press `Enter` to save it to Obsidian
+6. Press `Esc` to hide the input box
 
 ## Obsidian Integration
 
@@ -84,7 +87,9 @@ This app integrates with Obsidian through its Local REST API:
 - **Requirements**: 
   - Obsidian must be running
   - The "Local REST API" plugin must be installed and enabled
-  - Your API key must be set in the `.env` file
+  - Your API key must be set either:
+    - Through the app settings (click the ⚙️ icon), or
+    - In the `.env` file
 
 - **How it works**:
   - Text entered in the pop-up is sent to Obsidian as a new note
