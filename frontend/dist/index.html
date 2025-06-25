@@ -23,10 +23,6 @@
             padding: 0;
         }
 
-        
-
-
-
         .container {
             background: #15193f;
             border-radius: 8px;
@@ -122,6 +118,93 @@
             display: none !important;
         }
 
+        .settings-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            color: #888;
+            font-size: 18px;
+            z-index: 100;
+        }
+        
+        .settings-icon:hover {
+            color: #e0e0e0;
+        }
+        
+        .settings-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a1e42;
+            border-radius: 8px;
+            padding: 20px;
+            z-index: 1000;
+            width: 80%;
+            max-width: 400px;
+            border: 1px solid #404040;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .settings-panel h3 {
+            color: #e0e0e0;
+            margin-bottom: 15px;
+            font-size: 16px;
+            border-bottom: 1px solid #404040;
+            padding-bottom: 10px;
+        }
+        
+        .setting-group {
+            margin-bottom: 15px;
+        }
+        
+        .setting-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+        
+        .setting-group input {
+            width: 100%;
+            padding: 8px 10px;
+            background: #0a0f2e;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            color: #e0e0e0;
+            margin-bottom: 8px;
+        }
+        
+        /* 
+           The following CSS rule controls the position and layout of the Save button
+           inside the settings panel. To change the Save button's position, modify
+           the .setting-group button selector below.
+        */
+        .setting-group button {
+            display: inline-block;
+            padding: 8px 15px;
+            background: #3e4b8e;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 2px;
+            
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .setting-group button:hover {
+            background: #495daf;
+        }
+        
+        .settings-saved {
+            color: #4caf50;
+            font-size: 14px;
+            margin-top: 10px;
+        }
 
     </style>
 </head>
@@ -140,6 +223,20 @@
             </div>
             <div id="result" class="result"></div>
         </div>
+
+    <!-- Add a settings icon -->
+    <span class="settings-icon" id="settingsIcon">⚙️</span>
+
+    <!-- Add a settings panel -->
+    <div id="settingsPanel" class="settings-panel hidden">
+      <h3>Settings</h3>
+      <div class="setting-group">
+        <label for="apiKeyInput">Obsidian API Key:</label>
+        <input type="text" id="apiKeyInput" placeholder="Enter your Obsidian API key">
+        <button id="saveApiKey">Save</button>
+      </div>
+      <div id="settingsSaved" class="settings-saved hidden">Settings saved!</div>
+    </div>
 
     <script src="/wails/runtime/runtime.js"></script>
     <script>
@@ -160,12 +257,15 @@
         
         // Focus input when window is shown or gets focus
         window.addEventListener('focus', () => {
-            input.focus();
+            if (settingsPanel.classList.contains('hidden')) {
+                input.focus();
+            }
         });
         
-        // Aggressive focus approach - check every 50ms if document is visible and focused
+        // Modify the interval function
         setInterval(() => {
-            if (document.visibilityState === 'visible' && document.hasFocus()) {
+            if (document.visibilityState === 'visible' && document.hasFocus() && 
+                settingsPanel.classList.contains('hidden')) {
                 input.focus();
             }
         }, 50);
@@ -215,6 +315,55 @@
                 // Allow Shift+Enter to create a new line
                 // Default behavior will work
             }
+        });
+
+        // Add event listeners for settings
+        const settingsIcon = document.getElementById('settingsIcon');
+        const settingsPanel = document.getElementById('settingsPanel');
+        const saveApiKeyButton = document.getElementById('saveApiKey');
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const settingsSaved = document.getElementById('settingsSaved');
+        
+        settingsIcon.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent event bubbling
+            settingsPanel.classList.toggle('hidden');
+            if (!settingsPanel.classList.contains('hidden')) {
+                apiKeyInput.focus();
+                // Stop the interval focus temporarily
+                document.body.classList.add('settings-open');
+            } else {
+                document.body.classList.remove('settings-open');
+                input.focus();
+            }
+        });
+        
+        saveApiKeyButton.addEventListener('click', async () => {
+            const apiKey = apiKeyInput.value.trim();
+            if (apiKey) {
+                const result = await window.go.main.App.SaveAPIKey(apiKey);
+                settingsSaved.textContent = result;
+                settingsSaved.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    settingsSaved.classList.add('hidden');
+                }, 3000);
+            }
+        });
+
+        // Add click outside to close settings panel
+        document.addEventListener('click', (e) => {
+            if (!settingsPanel.classList.contains('hidden') && 
+                !settingsPanel.contains(e.target) && 
+                e.target !== settingsIcon) {
+                settingsPanel.classList.add('hidden');
+                document.body.classList.remove('settings-open');
+                input.focus();
+            }
+        });
+        
+        // Stop propagation on settings panel clicks
+        settingsPanel.addEventListener('click', (e) => {
+            e.stopPropagation();
         });
     </script>
 </body>

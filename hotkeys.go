@@ -12,6 +12,8 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"time"
 	"crypto/tls"
+	"path/filepath"
+	"encoding/json"
 )
 
 // App struct
@@ -19,21 +21,41 @@ type App struct {
 	ctx context.Context
 }
 
+// Configuration struct
+type Config struct {
+	ObsidianAPIKey string `json:"obsidian_api_key"`
+	ObsidianURL    string `json:"obsidian_url"`
+}
 
 // NewApp creates a new App application struct
 func NewApp() *App {
 	return &App{}
 }
 
-
-
 // OnStartup is called when the app starts
 func (a *App) OnStartup(ctx context.Context) {
 	a.ctx = ctx
 	
-	// Load .env file if using godotenv
-	if err := godotenv.Load(); err != nil {
-		fmt.Println("Error loading .env file")
+	// Try multiple locations for .env file
+	envPaths := []string{
+		".env",                           // Current directory
+		filepath.Join(os.Getenv("HOME"), ".config", "pop-up", ".env"), // User config dir
+		filepath.Join(filepath.Dir(os.Args[0]), ".env"), // App directory
+	}
+	
+	envLoaded := false
+	for _, path := range envPaths {
+		if _, err := os.Stat(path); err == nil {
+			if err := godotenv.Load(path); err == nil {
+				fmt.Println("Loaded .env from:", path)
+				envLoaded = true
+				break
+			}
+		}
+	}
+	
+	if !envLoaded {
+		fmt.Println("Warning: Could not load .env file")
 	}
 	
 	a.startHotkeyListener()
@@ -101,8 +123,16 @@ func (a *App) ProcessInput(input string) string {
 
 // CreateObsidianNote creates a new note in Obsidian via the Local REST API
 func (a *App) CreateObsidianNote(title string, content string) string {
-	// Get API key from environment
-	apiKey := os.Getenv("OBSIDIAN_API_KEY")
+	// First try to get the API key from the config file
+	config, err := LoadConfig()
+	var apiKey string
+	
+	if err == nil && config.ObsidianAPIKey != "" {
+		apiKey = config.ObsidianAPIKey
+	} else {
+		// Fall back to environment variable
+		apiKey = os.Getenv("OBSIDIAN_API_KEY")
+	}
 	
 	// Obsidian Local REST API URL
 	url := fmt.Sprintf("https://127.0.0.1:27124/vault/%s", title)
@@ -124,6 +154,8 @@ func (a *App) CreateObsidianNote(title string, content string) string {
 	// Add authorization header with API key
 	if apiKey != "" {
 		req.Header.Add("Authorization", "Bearer " + apiKey)
+	} else {
+		return "Error: No API key found. Please add your Obsidian API key in settings."
 	}
 	
 	req.Header.Add("Content-Type", "text/plain")
@@ -140,8 +172,75 @@ func (a *App) CreateObsidianNote(title string, content string) string {
 		return fmt.Sprintf("Note '%s' created successfully", title)
 	} else {
 		bodyBytes, _ := io.ReadAll(resp.Body)
-		return fmt.Sprintf("Error: %s - %s", resp.Status, string(bodyBytes))
+		responseText := string(bodyBytes)
+		return fmt.Sprintf("Error: %s - %s", resp.Status, responseText)
 	}
+}
+
+// LoadConfig loads configuration from file
+func LoadConfig() (*Config, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+	
+	configDir := filepath.Join(home, ".config", "pop-up")
+	os.MkdirAll(configDir, 0755) // Create directory if it doesn't exist
+	
+	configPath := filepath.Join(configDir, "config.json")
+	
+	// Check if config file exists
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		// Create default config
+		defaultConfig := &Config{
+			ObsidianAPIKey: os.Getenv("OBSIDIAN_API_KEY"), // Try to get from env first
+			ObsidianURL:    "https://127.0.0.1:27124/vault/",
+		}
+		
+		// Save default config
+		configBytes, _ := json.MarshalIndent(defaultConfig, "", "  ")
+		os.WriteFile(configPath, configBytes, 0644)
+		
+		return defaultConfig, nil
+	}
+	
+	// Read existing config
+	configBytes, err := os.ReadFile(configPath)
+	if err != nil {
+		return nil, err
+	}
+	
+	var config Config
+	if err := json.Unmarshal(configBytes, &config); err != nil {
+		return nil, err
+	}
+	
+	// Override with environment variables if available
+	if envKey := os.Getenv("OBSIDIAN_API_KEY"); envKey != "" {
+		config.ObsidianAPIKey = envKey
+	}
+	
+	return &config, nil
+}
+
+// SaveAPIKey saves the API key to the config file
+func (a *App) SaveAPIKey(apiKey string) string {
+	config, err := LoadConfig()
+	if err != nil {
+		return "Error loading config"
+	}
+	
+	config.ObsidianAPIKey = apiKey
+	
+	home, _ := os.UserHomeDir()
+	configPath := filepath.Join(home, ".config", "pop-up", "config.json")
+	
+	configBytes, _ := json.MarshalIndent(config, "", "  ")
+	if err := os.WriteFile(configPath, configBytes, 0644); err != nil {
+		return "Error saving config"
+	}
+	
+	return "API Key saved successfully"
 }
 
 
