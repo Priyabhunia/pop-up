@@ -8,8 +8,12 @@ import (
 	"os"
 	"net/http"
 	"strings"
+	"net/url"
+	"os/exec"
+	"runtime"
 	hook "github.com/robotn/gohook"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+  //"github.com/wailsapp/wails/v2/pkg/runtime"
+	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 	"time"
 	"crypto/tls"
 	"path/filepath"
@@ -72,16 +76,16 @@ func (a *App) startHotkeyListener() {
 				if ev.Keycode == 57 && ev.Mask == 2 {
 					if a.ctx != nil {
 						// Show the window
-						runtime.WindowShow(a.ctx)
+						wailsRuntime.WindowShow(a.ctx)
 						
 						// Force focus by temporarily setting always on top
-						runtime.WindowSetAlwaysOnTop(a.ctx, true)
+						wailsRuntime.WindowSetAlwaysOnTop(a.ctx, true)
 						/////this code is for testing not working properly
 						// Short delay to ensure window is visible and focused
 						time.Sleep(100 * time.Millisecond)
 						
 						// Return to normal state
-						runtime.WindowSetAlwaysOnTop(a.ctx, false)
+						wailsRuntime.WindowSetAlwaysOnTop(a.ctx, false)
 					}
 				}
 			}
@@ -92,7 +96,7 @@ func (a *App) startHotkeyListener() {
 // HideWindow hides the Wails window (to be called from frontend)
 func (a *App) HideWindow() {
 	if a.ctx != nil {
-		runtime.WindowHide(a.ctx)
+		wailsRuntime.WindowHide(a.ctx)
 	}
 }
 
@@ -102,6 +106,29 @@ func (a *App) ProcessInput(input string) string {
 		return "Please enter something!"
 	}
 	
+	// Check if this is a search query with prefix at the END (e.g., "search term !g")
+	if strings.Contains(input, " !") {
+		parts := strings.Split(input, " !")
+		if len(parts) == 2 {
+			query := strings.TrimSpace(parts[0])
+			prefix := "!" + strings.TrimSpace(parts[1])
+			
+			return a.handleSearchQuery(prefix, query)
+		}
+	}
+	
+	// Check if this is a search query with prefix at the BEGINNING (e.g., "!g search term")
+	if strings.HasPrefix(input, "!") {
+		parts := strings.SplitN(input, " ", 2)
+		if len(parts) == 2 && parts[1] != "" {
+			prefix := parts[0]
+			query := parts[1]
+			
+			return a.handleSearchQuery(prefix, query)
+		}
+	}
+	
+	// Not a search query, handle as normal note creation
 	// Simple format: First line is title, rest is content
 	parts := strings.SplitN(input, "\n", 2)
 	title := parts[0]
@@ -119,6 +146,64 @@ func (a *App) ProcessInput(input string) string {
 	
 	// Create the note in Obsidian
 	return a.CreateObsidianNote(fileName, content)
+}
+
+// handleSearchQuery processes search queries with prefixes
+func (a *App) handleSearchQuery(prefix string, query string) string {
+	if query == "" {
+		return "Please enter a search term"
+	}
+	
+	encodedQuery := url.QueryEscape(query)
+	var searchURL string
+	var searchEngine string
+	
+	switch prefix {
+	case "!g":
+		searchURL = "https://www.google.com/search?q=" + encodedQuery
+		searchEngine = "Google"
+	case "!yt":
+		searchURL = "https://www.youtube.com/results?search_query=" + encodedQuery
+		searchEngine = "YouTube"
+	case "!gh":
+		searchURL = "https://github.com/search?q=" + encodedQuery
+		searchEngine = "GitHub"
+	case "!c":
+		searchURL = "https://chat.openai.com/?q=" + encodedQuery
+		searchEngine = "ChatGPT"
+	case "!grok":
+		searchURL = "https://grok.com/?q=" + encodedQuery
+		searchEngine = "Grok"
+	default:
+		return "Unknown search prefix: " + prefix
+	}
+	
+	// Open the URL in the default browser
+	if err := a.openBrowser(searchURL); err != nil {
+		return "Error opening browser: " + err.Error()
+	}
+	
+	return fmt.Sprintf("Opening %s search for: %s", searchEngine, query)
+}
+
+// openBrowser opens the specified URL in the default browser
+func (a *App) openBrowser(url string) error {
+	var cmd string
+	var args []string
+
+	switch runtime.GOOS {
+	case "windows":
+		cmd = "cmd"
+		args = []string{"/c", "start", url}
+	case "darwin":
+		cmd = "open"
+		args = []string{url}
+	default: // "linux", "freebsd", etc.
+		cmd = "xdg-open"
+		args = []string{url}
+	}
+
+	return exec.Command(cmd, args...).Start()
 }
 
 // CreateObsidianNote creates a new note in Obsidian via the Local REST API
