@@ -28,6 +28,11 @@ A minimalist, global hotkey-activated input box for quick commands and searches 
 - **Always On Top**: Input box appears above all other windows
 - **Escape to Hide**: Press `Esc` to hide the input box
 - **Quick Obsidian Notes**: Type anything to create notes directly in Obsidian
+- **Web Search Shortcuts**: Use prefixes to quickly search the web:
+  - `!g query` - Search Google
+  - `!yt query` - Search YouTube
+  - `!gh query` - Search GitHub
+  - `!so query` - Search Stack Overflow
 
 ## Screenshots
 
